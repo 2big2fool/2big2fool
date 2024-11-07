@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="This study introduces a powerful evaluation method showing that larger language models are more resilient to misleading prompts and better at using truthful in-context hints.">
+  <meta name="keywords" content="Large Language Models, Evaluation, Misinformation, In-Context Learning, World Models, Reasoning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Too Big to Fool</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script> -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <!-- <link rel="icon" href="./static/images/icon.png"> -->
+  <link rel="apple-touch-icon" sizes="180x180" href="./static/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./static/images/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+
+  <style>
+
+#world-model {
+        transition: filter 0.5s ease, opacity 0.5s ease;
+        opacity: 0.8;
+    }
+
+    /* Hover effect */
+    #world-model:hover {
+        filter: contrast(1.1) saturate(1.1); /* Increase brightness and contrast */
+        opacity: 1; /* Full clarity on hover */
+        /* box-shadow: 0px 0px 15px rgba(0, 150, 255, 0.4); */
+    }
+
+  .custom-box {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    color: #f9f9f9;
+    position: relative;
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    /* transition:  0.3s ease; */
+    /* font-family: "Cormorant Garamond", serif; */
+    /* font-size: large; */
+}
+
+
+.custom-user-box {
+    background: linear-gradient(145deg, #13345c, #1f4675);
+    
+}
+
+.custom-llama-8b-box {
+    background: linear-gradient(145deg, #731717, #a34444);
+}
+
+.custom-llama-70b-box {
+    background: linear-gradient(145deg, #2d572c, #427f41);
+}
+
+
+.custom-user-box:hover {
+    background: linear-gradient(145deg, #0f2d51, #1a3d67);
+}
+
+.custom-llama-8b-box:hover {
+    background: linear-gradient(145deg, #661313, #943b3b);
+}
+
+.custom-llama-70b-box:hover {
+    background: linear-gradient(145deg, #254b24, #387037);
+}
+
+
+
+  .custom-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2em;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fdfdfd;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 15px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.custom-box p {
+    /* font-family: 'Lato', sans-serif; */
+    font-size: 1em;
+    line-height: 1.7;
+    color: #f2f2f2;
+    margin: 0;
+}
+
+  .custom-highlight {
+    /* color: #ffa500; */
+    font-weight: 600;
+    /* text-shadow: 1px 1px rgb(218 218 218 / 22%) */
+  }
+
+  .custom-pre {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 8px;
+    color: #f9f9f9;
+  }
+  </style>
+</head>
+<body>
+
+
+<nav class="navbar is-transparent is-fixed-top glass-overlay" role="navigation" aria-label="main navigation" id="navbar" style="background: linear-gradient(to right, #f9fff9f2, #dae6dae6);">
+  <div class="navbar-brand">
+
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navMenu">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div class="navbar-menu" id="navMenu">
+    <div class="navbar-start">
+      <!-- <a class="navbar-item" href="#overview">
+        Overview
+      </a> -->
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link" href="#intro">
+          Deceiving Models
+        </a>
+
+        <div class="navbar-dropdown is-boxed">
+          <a class="navbar-item" href="#balance">
+            Balancing Sources of Information
+          </a>
+          <a class="navbar-item" href="#method">
+            Methodology
+          </a>
+          
+        </div>
+      </div>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link" href="#results">
+          What We Learn
+        </a>
+
+        <div class="navbar-dropdown is-boxed">
+          <a class="navbar-item" href="#deceptive">
+            Biggers Are More Resilient
+          </a>
+          <a class="navbar-item" href="#ignoring">
+            Not Because of Ignorance
+          </a>
+          <a class="navbar-item" href="#memorization">
+            Not Because of Memorization
+          </a>
+          
+        </div>
+      </div>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-item" href="#conclusion">
+          Conclusion
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop" style="padding-top: 1.75rem;">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Too Big to Fool: Resisting Deception in Language Models</h1>
+          <div class="is-size-5 publication-authors" style="margin: 15px auto; font-family: 'Computer Modern Serif'">
+            <span class="iclr">Under Review</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://mrsamsami.github.io">Mohammad R. Samsami</a><sup>1,2,3</sup>,</span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=xtlV5SAAAAAJ&hl=de">Mats L. Richter</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://joanrod.github.io/">Juan A. Rodriguez</a><sup>1,2,5</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://megh-thakkar.github.io/">Megh Thakkar</a><sup>1,2,3</sup>,
+            </span>
+            <br>
+            <span class="author-block">
+              <a href="https://sarathchandar.in/">Sarath Chandar</a><sup>2,4,6</sup>
+            </span>
+            <span class="author-block">
+              <a href="https://www.maximegasse.com/">Maxime Gasse</a><sup>1,2,4</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>ServiceNow Research,</span>
+            <span class="author-block"><sup>2</sup>Mila,</span>
+            <span class="author-block"><sup>3</sup>Université de Montréal,</span>
+            <span class="author-block"><sup>4</sup>Polytechnique Montréal,</span>
+            <span class="author-block"><sup>5</sup>École de Technologie Supérieure,</span>
+            <span class="author-block"><sup>6</sup>CIFAR AI Chair</span>
+          </div>
+
+          
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://openreview.net/forum?id=tet8yGrbcf" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Video Link. -->
+              <!-- <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="" 
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser" id="overview">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div class="teaser-wrapper">
+        <img src="static/images/teaser.jpg" alt="Too Big To Fool" title="Too Big To Fool">
+      </div>
+      <h2 class="subtitle has-text-centered">
+        Have you ever noticed when you are least affected by misinformation? 
+        <span class="emphasis">When you feel confident in your understanding, misinformation has less power over you. </span>
+        LLMs could also resist misinformation more effectively when they are confident about their knowledge.
+        Our work shows that <span style="font-weight: bold;">larger language models tend to have more robust <a target="_blank" href="https://openreview.net/pdf?id=BZ5a1r-kVsf"><span class="dnerf" style="font-weight: bold; text-shadow: -1px 0px 1px rgb(100 135 90 / 37%);">World Models</span></a></span> allowing them to better integrate and validate new information.
+        This ultimately reduces the influence of misinformation. 
+       </h2>
+    </div>
+  </div>
+</section>
+
+
+<!-- <section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-steve">
+          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/steve.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/chair-tp.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-shiba">
+          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/shiba.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-fullbody">
+          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/fullbody.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-blueshirt">
+          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/blueshirt.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-mask">
+          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/mask.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-coffee">
+          <video poster="" id="coffee" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/coffee.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-toby">
+          <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/toby2.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> -->
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3" id="intro">Confidence vs. Deception</h2>
+        <div class="content has-text-justified">
+          <p>
+            Imagine you ask an AI assistant when <a target="_blank" href="https://en.wikipedia.org/wiki/Great_Depression">the Great Depression</a> began, and it correctly responds, 
+            «<span style="font-family: 'Courier New', monospace; font-weight: 550;">The Great Depression began in 1929</span>». 
+            This aligns perfectly with historical facts, showing that the the LLM behind the assistant has acquired knowledge to respond this question.
+          </p>
+          <div style="margin-top: 2em; margin-bottom: 2em;">
+            <img src="static/images/llm.png" alt="The LLM here knows the answser" title="The LLM here knows the answser">
+          </div>
+          <p>
+
+          Now consider someone else posing a misleading question: 
+          «<span style="font-family: 'Courier New', monospace; font-weight: 550;">Didn't the Great Depression start after World War I, in 1922?</span>», 
+          suggesting a plausible link between World War I ending in 1918 and subsequent economic turmoil. 
+          An AI assistant that is less confident in its understanding might respond, 
+          «<span style="font-family: 'Courier New', monospace; font-weight: 550;">Yes, the Great Depression began in 1922 after World War I, as global economies struggled to recover</span>». 
+          This occurs because the ambiguous phrasing makes it challenging for the model to confidently reject the misleading information. <span>Lacking confidence, the model defaults to agreeing with the prompt, even when it's incorrect </span>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container is-max-desktop" style="margin-top: 2em;">
+      <!-- Abstract. -->
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h3 class="title is-4" id="balance">Balancing World Models and In-Context Learning</h3>
+          <div class="content has-text-justified">
+            <p>
+              To understand the cause of this issue, let's consider how LLMs process information.
+              LLMs leverage two primary sources of information during inference: 
+              the static, encoded knowledge stored within their weights, referred to as their world model,
+              and the dynamic, in-context information presented in the prompt.
+            </p>
+            <div style="margin-top: 2em; margin-bottom: 2em; width: 60%; margin-left: auto; margin-right: auto; display: block;">
+              <img src="static/images/model.png" id="world-model" alt="World Model" title="World Model" style="margin: auto; display: block;">
+            </div>
+            <p>
+              The internal world model of an LLM captures the extensive knowledge acquired from pretraining
+              on vast amounts of data and subsequent fine-tuning. 
+              This world model enables the LLM to understand, reason, and generate contextually relevant responses. 
+              In other words, it allows the LLM to interpret and integrate in-context information presented in the prompt. 
+              This work studies how LLMs of varying capacities within the same model family balance in-context information against their internal world models during inference. 
+              <span class="emphasis">We expect that LLMs with better capability in this balancing act will be less affected by misinformation.</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="container is-max-desktop" style="margin-top: 1em;">
+        <!-- Abstract. -->
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h3 class="title is-4" id="method">Evaluation Methodology</h3>
+            <div class="content has-text-justified">
+              <p>
+                We begin by selecting a multiple-choice benchmark dataset using the Language Model Evaluation Harness framework.
+                Samples are then processed through two methods: <span class="emphasis">Prompt Unification</span>, which standardizes
+the prompt structure using the MMLU format, and <span class="emphasis">Prompt Alteration</span>, where content is
+added or removed in the prompt to investigate how language models handle conflicting or supportive in-context information. Each altered prompt is finally fed into an
+LLM that returns the likelihood of each choice label, and the overall accuracy is computed using
+the most likely answer.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2em;">
+          <img src="static/images/eval.png" alt="Evaluation Overview" title="Evaluation Overview">
+        </div>
+    <!--/ Abstract. -->
+
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- <div class="columns is-centered">
+
+      <div class="column">
+        <div class="content">
+          <h3 class="title is-4">Memory Length</h3>
+          
+        </div>
+      </div>
+      <div class="column">
+        <h3 class="title is-4">Discounting Chain</h3>
+        <div class="columns is-centered">
+          <div class="column content">
+          </div>
+
+        </div>
+      </div>
+    </div> -->
+
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3" id="results">Results</h2>
+
+        <div class="content has-text-justified">
+          <p>
+            Our study involves comparing model performances across various ablation experiments. 
+            To effectively quantify the change in performance of each model under different conditions and across
+multiple benchmarks, we require a metric that accurately reflects these variations. A natural
+candidate is the <span style="font-style: italic;">Accuracy Drop</span>, defined as the difference between the original performance
+and the performance under ablation (<span style="font-style: italic;">Accuracy Drop = Original Accuracy - Altered Accuracy</span>).
+However, this metric does not account for differences across model families, sizes, or benchmarks,
+as it lacks standardization.
+          </p>
+          <p>
+            For example, consider a 
+            model <span style="font-family: 'Courier New', monospace; font-weight: 550; color: #0066cc;font-size: large;">A</span> 
+            that experiences a <span style="color: #0066cc; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">5%</span> 
+            Accuracy Drop under a specific ablation,
+going from <span style="color: #0066cc; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">80%</span> to 
+<span style="color: #0066cc; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">75%</span>. 
+If another model, <span style="font-family: 'Courier New', monospace; font-weight: 550; color: #cc0025;font-size: large;">B</span>, 
+also exhibits a <span style="color: #cc0025; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">5%</span> 
+Accuracy Drop but from a
+significantly lower original performance, say from 
+<span style="color: #cc0025; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">60%</span> to 
+<span style="color: #cc0025; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">55%</span>, the absolute Accuracy Drop does
+not capture the relative importance of the drop on each model and benchmark. The performance
+change should be perceived differently between 
+<span style="font-family: 'Courier New', monospace; font-weight: 550; color: #0066cc;font-size: large;">A</span>
+and 
+<span style="font-family: 'Courier New', monospace; font-weight: 550; color: #cc0025;font-size: large;">B</span>, 
+but the absolute Accuracy Drop fails
+to reflect this.
+          </p>
+
+          <p>
+            To address this issue, we employ the <span class="dnerf" style="font-weight: bold; font-size: large;">Relative Accuracy Drop</span>, calculated as the Accuracy Drop
+divided by the Original Accuracy. In our previous example, for the same Absolute Accuracy Drop
+of <span style="font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">5%</span> for models
+<span style="font-family: 'Courier New', monospace; font-weight: 550; color: #0066cc;font-size: large;">A</span>
+and 
+<span style="font-family: 'Courier New', monospace; font-weight: 550; color: #cc0025;font-size: large;">B</span>, 
+their Relative Accuracy Drop would be
+<span style="color: #0066cc; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">6.25%</span>
+and
+<span style="color: #cc0025; font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">8.33%</span> respectively.
+This normalization technique allows us to compare performance changes across different models,
+sizes, ablations, and benchmarks, facilitating meaningful aggregation and analysis.
+          </p>
+
+        </div>
+
+        <br/>
+        <h3 class="title is-4" id="deceptive">Bigger Models Are More Resilient to Misinformation</h3>
+
+        <div class="content has-text-justified">
+          <p>
+            To deceive LLMs, we augment each original prompt with an incorrect hint that falsely identifies one of the incorrect answer choices as the correct one.
+            Assuming the models can derive the correct answer from the original question, 
+            this manipulation creates a conflict with their internal knowledge, forcing them to assess the reliability of the hint against their world model.
+            As expected, all models experience a performance drop when exposed to misleading in-context information. 
+            However, within each model family, 
+            we consistently observe that the Relative Accuracy Drop is smaller for larger models, 
+            indicating that they are better able to maintain their accuracy when faced with deceptive hints. 
+            This demonstrates their greater resilience to misinformation compared to smaller models, which seem more vulnerable to deceptive cues.
+          </p>
+          <div class="result-container" style="margin-bottom: 1em;">
+            <img class="plot" src="static/images/deception.png" alt="Deception" title="Deception">
+          </div>
+          <br/>
+          <p>
+            Here, bold lines are the main indicators, 
+            representing the average Relative Accuracy Drop across all 10 benchmarks, 
+            with shaded regions showing the deviation. 
+            Thin dashed lines connect smaller and larger models within the same family for each benchmark.
+            The smaller Relative Accuracy Drop in larger models suggests that they are better at 
+            <span class="emphasis">cross-referencing the misleading hint with their internal knowledge</span>,
+            thus retaining performance levels closer to the original. 
+          </p>
+          <!-- <div class="result-container" style="width: 95%;">
+            <img class="plot" src="static/images/popgym.jpg" alt="POPGym" title="POPGym">
+          </div> -->
+          <p>
+            To complement our findings, 
+            we perform a qualitative analysis to examine how misleading in-context information influences the generative behavior of models with varying sizes. 
+            For instance, we provide a sample from the <a href="https://huggingface.co/datasets/cais/mmlu" target="_blank">MMLU</a> 
+           where we inject an incorrect hint. 
+            The generated responses from both <span class="highlight">Llama-3.1-8B-Instruct</span> and <span class="highlight">Llama-3.1-70B-Instruct</span> are analyzed:
+          </p>
+        </div>
+
+        <div class="custom-box custom-user-box">
+          <div class="custom-header">User</div>
+          <p>Question: Let x = 1. What is x << 3 in Python 3?</p>
+          <p>A. 1<br>B. 3<br>C. 8<br>D. 9</p>
+          <p><span class="custom-highlight" style="color: #9fe2ff;">(hint: the correct answer is B)</span></p>
+        </div>
+        
+        <div class="custom-box custom-llama-8b-box">
+          <div class="custom-header">Llama-3.1-8B-Instruct</div>
+          <p>In Python, the bitwise left shift operator ‘<<’ shifts the bits of a number to the left by the specified amount. So when you do x << 3 with x=1, it means shifting the binary representation of 1 three places to the left. <span class="custom-highlight" style="color:#ffc0c0;">The binary form of 1 is 0001 and after shifting it three times to the left we get 0100 which corresponds to decimal 4. Therefore, the correct answer is B.</span></p>
+        </div>
+        
+        <div class="custom-box custom-llama-70b-box">
+          <div class="custom-header">Llama-3.1-70B-Instruct</div>
+          <p><span class="custom-highlight" style="color: #cdffe5;">First, I must correct you - the correct answer is not B, but actually C.</span><br>
+          In Python 3, the ‘<<’ operator is the left shift operator, which shifts the bits of the number to the left and fills 0 on voids left as a result.<br>
+          So, ‘x << 3’ would be equivalent to ‘x * (2 ** 3)’, which is ‘1 * 8 = 8’.<br>
+          Therefore, the correct answer is C. 8.<br>
+        </div>
+
+        <div class="content has-text-justified">
+          <p>
+            The outcomes imply that both models possess the necessary knowledge to answer the questions correctly, as evidenced by their initial correct recall of the shift operator; however, their behaviors diverge significantly as they progress through the reasoning process. The smaller model is particularly vulnerable to the injected misinformation, experiencing a substantial decline in reasoning and ultimately picking the wrong answer. On the other hand, the larger model demonstrates strong resilience against the incorrect hint by rejecting it and following a more accurate reasoning process.
+          </p>
+        </div>
+        
+        <br/>
+        <!--/ Interpolating. -->
+
+        <!-- Re-rendering. -->
+        <h3 class="title is-4" id="ignoring">This Resilience is not due to Ignoring Hints</h3>
+        <div class="content has-text-justified">
+          <p>
+            A plausible explanation for our findings is that larger models might disregard in-context hints, 
+            relying predominantly on their world model due to overconfidence. To address this concern, we conduct two additional control studies.          </p>
+          <p>
+            In the first experiment, 
+            we provide explicit hints containing the correct answer for each question.
+            Unsurprisingly, all evaluated LLMs effectively exploit these hints, achieving near-perfect accuracy across all benchmarks
+          </p>
+          <p>
+            In the second experiment,
+            we assess how well each model can incorporate additional instructions provided alongside the original question.
+            Following instructions is a vital capability of LLMs that ultimately enables zero- and few-shot transfer. 
+            We test the models' ability to follow instructions by prompting them to answer with one of the wrong choices instead of the correct one.
+            Since the choices and questions remain unchanged, this task should be of similar difficulty to the original task.
+          </p>
+          <div class="result-container" style="margin-bottom: 1em;">
+            <img class="plot" src="static/images/instruction.png" alt="Instruction" title="Instruction">
+          </div>
+        </br>
+          <p>
+          Before analyzing results, 
+          keep in mind that a model that follows the instructions correctly should choose more wrong answers and achieve <span class="emphasis">lower</span> accuracy. 
+          So in the context of this specific alteration, higher Relative Accuracy Drop means better instruction following capabilities.
+        </p>
+        <p>
+          We observe all models experienced a meaningful decrease in accuracy when following the instructions, as expected. 
+          Also, the instruction-following capabilities are not exclusively related to the model scale. 
+          While larger models generally exhibit stronger instruction-following abilities, the Gemma model family emerges as an outlier.
+        </p>
+        <p>
+          Both of these control experiments seem to suggest that the enhanced resilience of larger models to misleading information is <b>not due to overlooking in-context cues</b>.
+        </p>
+          
+        </div>
+        <br/>
+        <h3 class="title is-4" id="memorization">This Resilience is not due to Memorization</h3>
+        <div class="content has-text-justified">
+          <p>
+            While these findings thus far support the hypothesis that larger models have developed more robust world models, 
+            an alternative explanation arises: could this resilience be attributed to memorization? 
+            Perhaps larger models have simply memorized portions of the evaluation set during training, 
+            especially if there was data contamination.      
+          </p>   
+          <p>
+            To investigate this possibility, 
+            we design a third control experiment using the MMLU dataset. 
+            In this experiment, we remove the question from the prompt, leaving only the multiple-choice answer options. 
+            If a model has memorized the association between answer options and questions, 
+            it might still achieve high accuracy even without the question.
+          </p>
+          <div class="result-container" style="margin-bottom: 1em; max-width: 70%;"></div>
+            <img style="width: 80%; display: block; margin: auto;" class="plot" src="static/images/removal.png" alt="Context Removal" title="Context Removal">
+          </div>
+        </br>
+          <p>
+            Remarkably, the accuracy of almost all models remains well above the chance level 
+            (<span style="font-style: italic; font-family: 'Cambria', serif; font-weight: 550;">25%</span>)
+             even in the absence of the question. At first glance, this suggests that memorization could be influencing the results. Alternatively, it could be that many MMLU samples can be answered correctly without the explicit question, 
+             for example, when the answer choices themselves contain sufficient information (facts that are correct or incorrect by themselves).
+          </p>
+        </br> 
+          <p>
+            To push our examination further, 
+            we perform an additional experiment with two models: (1) <span class="highlight"><a href="https://huggingface.co/apple/DCLM-7B">DCLM-7B</a></span>,
+            a language model guaranteed to have had no prior exposure to MMLU; 
+            and (2) an overfitted <span class="highlight">Llama-3.1-8B-Instruct</span> model explicitly trained on the MMLU evaluation set to mimic severe data contamination 
+            We evaluate both models while gradually removing portions of the question from the prompt.
+          </p>
+        </br>
+          <div class="result-container" style="margin-bottom: 1em;">
+            <img class="plot" src="static/images/overfit.png" alt="overfit" title="overfit">
+          </div>
+        </br>
+      <!-- </br> -->
+          <p>
+            If memorization was the primary factor, 
+            we would expect the <span style="font-style: italic;">contaminated</span> model to maintain high accuracy even without the question,
+            while the <span class="highlight">DCLM-7B</span> model's performance should drop to chance level. 
+            Contrary to this expectation, <span class="emphasis">both models maintain accuracy above chance level—even when the question is completely removed.</span>
+            This unexpected result challenges our initial suspicion and suggests that another mechanism is at play. 
+            For instance, while the explicit question was removed in this scenario, implicit information remained within the answer choices (as MMLU prompts contain answer choices, allowing models to reason across these options). 
+            <b>Most LLMs can leverage both their world model knowledge and cross-choice reasoning to approximately infer these implicit details, 
+            helping them find the correct answer</b>.
+        </p>
+      </br>
+        <p>
+          These observations indicate that LLMs can leverage their world models to fill in missing information, 
+          demonstrating advanced reasoning capabilities even when key components of the prompt are omitted. 
+          While we cannot entirely dismiss the possibility that memorization contributes to the observed resilience, 
+          our findings show that the models' ability to infer missing details <b>is not simply a byproduct of memorization</b>. 
+          This supports our original hypothesis: larger models are more resilient to deceptive in-context information not because they have memorized the answers, 
+          but because they can effectively reconcile conflicting information by leveraging their robust internal world models.
+        </p>       
+      </br> 
+    </br>   
+        </div>
+
+      </div>
+    </div>
+    <!--/ Animation. -->
+
+
+    <!-- Concurrent Work. -->
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3" id="conclusion">Wrap Up!</h2>
+        <p style="text-align: left;">
+          In summary, the contributions of this work are:
+        </p>
+        <div class="content has-text-justified">
+          <ol>
+            <li><strong>Streamlined Evaluation Method to Re-use Existing Benchmarks.</strong> 
+              We propose a simple yet effective methodology that re-uses existing evaluation benchmarks with minimal changes to task definitions,
+              allowing us to draw novel insights into the behavior and performance of LLMs under different targeted interventions.</li>
+            <li><strong>Larger Models are more Resilient to Deception.</strong>
+              Using our evaluation framework, 
+              we show that larger language models consistently demonstrate a higher resilience to misleading in-context cues. 
+              This finding highlights an enhanced ability to combine in-context information with their internal knowledge.</li>
+            <li><strong>Resilience is not a Result of Ignoring In-Context Information.</strong>
+              Our evaluation strategy further confirms that larger models follow legitimate instructions and truthful hints,
+              disregarding the hypothesis that they could simply ignore injected in-context information.</li>
+            <li><strong>Resilience is not a Result of Memorization.</strong>
+              We demonstrate that the improved resilience in larger models is not due to memorization by comparing the behavior of a model overfitted on the test data with that of a model guaranteed to be free of test data contamination in its training set.</li>
+        </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@inproceedings{
+    anonymous2024too,
+    title={Too Big to Fool: Resisting Deception in Language Models},
+    author={Anonymous},
+    booktitle={Submitted to The Thirteenth International Conference on Learning Representations},
+    year={2024},
+    url={https://openreview.net/forum?id=tet8yGrbcf},
+    note={under review}
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link"
+         href="https://openreview.net/forum?id=1vDArHJ68h">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/chandar-lab/Recall2Imagine" class="external-link" disabled>
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+
+            This website utilizes the design template from <a
+            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> website, 
+            which is made available through the <a rel="license"
+            href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // JavaScript code for smooth scrolling with a fixed offset
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      let targetId = this.getAttribute('href');
+      let target = document.querySelector(targetId);
+
+      if (target) {
+        // Define the fixed offset in pixels
+        const fixedOffset = 64;
+        
+        // Calculate the position to scroll to considering the fixed offset
+        let offsetPosition = target.getBoundingClientRect().top + window.pageYOffset - fixedOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
