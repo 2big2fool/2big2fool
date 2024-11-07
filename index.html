@@ -695,9 +695,45 @@ sizes, ablations, and benchmarks, facilitating meaningful aggregation and analys
       </div>
     </div>
     <!--/ Animation. -->
+    </section>
+
+    <section class="section" style="margin-top: -3em;">
+      <div class="container is-max-desktop">
+        <!-- Abstract. -->
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3" id="conclusion">Wrap Up!</h2>
+            <div class="content has-text-justified">
+              <p style="text-align: left;">
+                In summary, the contributions of this work are:
+              </p>
+              <div>
+                <ol>
+                  <li><strong>Streamlined Evaluation Method to Re-use Existing Benchmarks.</strong> 
+                    We propose a simple yet effective methodology that re-uses existing evaluation benchmarks with minimal changes to task definitions,
+                    allowing us to draw novel insights into the behavior and performance of LLMs under different targeted interventions.</li>
+                  <li><strong>Larger Models are more Resilient to Deception.</strong>
+                    Using our evaluation framework, 
+                    we show that larger language models consistently demonstrate a higher resilience to misleading in-context cues. 
+                    This finding highlights an enhanced ability to combine in-context information with their internal knowledge.</li>
+                  <li><strong>Resilience is not a Result of Ignoring In-Context Information.</strong>
+                    Our evaluation strategy further confirms that larger models follow legitimate instructions and truthful hints,
+                    disregarding the hypothesis that they could simply ignore injected in-context information.</li>
+                  <li><strong>Resilience is not a Result of Memorization.</strong>
+                    We demonstrate that the improved resilience in larger models is not due to memorization by comparing the behavior of a model overfitted on the test data with that of a model guaranteed to be free of test data contamination in its training set.</li>
+              </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--/ Abstract. -->
+    
+    </section>
 
 
-    <!-- Concurrent Work. -->
+    <!-- Concurrent Work.
+    <section class="section">
 
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
@@ -724,7 +760,7 @@ sizes, ablations, and benchmarks, facilitating meaningful aggregation and analys
       </div>
     </div>
   </div>
-</section>
+</section> -->
 
 
 <section class="section" id="BibTeX">
