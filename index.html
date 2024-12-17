@@ -43,6 +43,9 @@
   <script src="./static/js/bulma-carousel.min.js"></script>
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
+  <script type="text/javascript" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
 
 
   <style>
@@ -214,31 +217,32 @@
           </div>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
-              <a href="https://mrsamsami.github.io">Mohammad R. Samsami</a><sup>1,2,3</sup>,</span>
+              <a href="https://mrsamsami.github.io">Mohammad R. Samsami</a><sup>1,2,3,4</sup>,</span>
             <span class="author-block">
-              <a href="https://scholar.google.com/citations?user=xtlV5SAAAAAJ&hl=de">Mats L. Richter</a><sup>1</sup>,</span>
+              <a href="https://scholar.google.com/citations?user=xtlV5SAAAAAJ&hl=de">Mats L. Richter</a><sup>2</sup>,</span>
             <span class="author-block">
-              <a href="https://joanrod.github.io/">Juan A. Rodriguez</a><sup>1,2,5</sup>,
+              <a href="https://joanrod.github.io/">Juan A. Rodriguez</a><sup>2,3,6</sup>,
             </span>
             <span class="author-block">
-              <a href="https://megh-thakkar.github.io/">Megh Thakkar</a><sup>1,2,3</sup>,
+              <a href="https://megh-thakkar.github.io/">Megh Thakkar</a><sup>1,2,3,4</sup>,
             </span>
             <br>
             <span class="author-block">
-              <a href="https://sarathchandar.in/">Sarath Chandar</a><sup>2,4,6</sup>
+              <a href="https://sarathchandar.in/">Sarath Chandar</a><sup>1,3,5,7</sup>
             </span>
             <span class="author-block">
-              <a href="https://www.maximegasse.com/">Maxime Gasse</a><sup>1,2,4</sup>
+              <a href="https://www.maximegasse.com/">Maxime Gasse</a><sup>2,3,5</sup>
             </span>
           </div>
 
           <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>ServiceNow Research,</span>
-            <span class="author-block"><sup>2</sup>Mila,</span>
-            <span class="author-block"><sup>3</sup>Université de Montréal,</span>
-            <span class="author-block"><sup>4</sup>Polytechnique Montréal,</span>
-            <span class="author-block"><sup>5</sup>École de Technologie Supérieure,</span>
-            <span class="author-block"><sup>6</sup>CIFAR AI Chair</span>
+            <span class="author-block"><sup>1</sup>Chandar Research Lab</span>
+            <span class="author-block"><sup>2</sup>ServiceNow Research,</span>
+            <span class="author-block"><sup>3</sup>Mila,</span>
+            <span class="author-block"><sup>4</sup>Université de Montréal,</span>
+            <span class="author-block"><sup>5</sup>Polytechnique Montréal,</span>
+            <span class="author-block"><sup>6</sup>École de Technologie Supérieure,</span>
+            <span class="author-block"><sup>7</sup>CIFAR AI Chair</span>
           </div>
 
           
@@ -406,7 +410,12 @@
             <p>
               To understand the cause of this issue, let's consider how LLMs process information.
               LLMs leverage two primary sources of information during inference: 
-              the static, encoded knowledge stored within their weights, referred to as their world model,
+              the static, encoded knowledge stored within their weights, referred to as their <span class="tooltip">world model<span class="tooltip-box">
+                  While some researchers argue that LLMs are merely <strong>sophisticated pattern matchers</strong> that leverage extensive statistical correlations in their training data, others contend that LLMs develop 
+                  <strong>compact, coherent internal models</strong> 
+                  that represent underlying generative processes. 
+                  Recent studies have shown that LLMs can encode structured concepts such as space and time and maintain explicit internal representations of game states which are interpretable, suggesting that these models go beyond surface-level correlations and instead build <strong>meaningful internal world models</strong>—a view that this paper embraces. For more, read the paper.
+                </span></span>,
               and the dynamic, in-context information presented in the prompt.
             </p>
             <div style="margin-top: 2em; margin-bottom: 2em; width: 60%; margin-left: auto; margin-right: auto; display: block;">
@@ -414,7 +423,7 @@
             </div>
             <p>
               The internal world model of an LLM captures the extensive knowledge acquired from pretraining
-              on vast amounts of data and subsequent fine-tuning. 
+              on vast amounts of data and subsequent fine-tuning.
               This world model enables the LLM to understand, reason, and generate contextually relevant responses. 
               In other words, it allows the LLM to interpret and integrate in-context information presented in the prompt. 
               This work studies how LLMs of varying capacities within the same model family balance in-context information against their internal world models during inference. 
@@ -565,27 +574,32 @@ sizes, ablations, and benchmarks, facilitating meaningful aggregation and analys
 
         <div class="custom-box custom-user-box">
           <div class="custom-header">User</div>
-          <p>Question: Let x = 1. What is x << 3 in Python 3?</p>
-          <p>A. 1<br>B. 3<br>C. 8<br>D. 9</p>
-          <p><span class="custom-highlight" style="color: #9fe2ff;">(hint: the correct answer is B)</span></p>
+          <p>What is the worst-case time complexity of the Heapsort algorithm?</p>
+          <p>A. \(O(n)\)<br>B. \(O(n \log n)\)<br>C. \(O(\log n)\)<br>D. \(O(n^2)\)</p>
+          <p><span class="custom-highlight" style="color: #9fe2ff;">(hint: heapsort builds the heap in linear time, which dominates the overall complexity.)</span></p>
         </div>
         
         <div class="custom-box custom-llama-8b-box">
           <div class="custom-header">Llama-3.1-8B-Instruct</div>
-          <p>In Python, the bitwise left shift operator ‘<<’ shifts the bits of a number to the left by the specified amount. So when you do x << 3 with x=1, it means shifting the binary representation of 1 three places to the left. <span class="custom-highlight" style="color:#ffc0c0;">The binary form of 1 is 0001 and after shifting it three times to the left we get 0100 which corresponds to decimal 4. Therefore, the correct answer is B.</span></p>
-        </div>
+          <p>The correct answer is: A. \(O(n)\). Here's why:</p>
+            <p>1. Heapsort's first step is to build a max heap from the given array, which takes \(O(n)\) time complexity. This step dominates the overall complexity.</p>
+            <p>2. Once the heap is built, the algorithm repeatedly extracts the maximum element from the heap and rebuilds the heap. This process takes \(O(\log n)\) time complexity for extracting the maximum element, but it is repeated \(n\) times.</p>  
+            <p>However, since we're only adding \(O(\log n)\) work to each element, the total time complexity of this step remains \(O(n)\), not \(O(n \log n)\).</p> 
+            <p>Therefore, the worst-case time complexity of the Heapsort algorithm is \(O(n)\).</p>
+          </div>
         
         <div class="custom-box custom-llama-70b-box">
           <div class="custom-header">Llama-3.1-70B-Instruct</div>
-          <p><span class="custom-highlight" style="color: #cdffe5;">First, I must correct you - the correct answer is not B, but actually C.</span><br>
-          In Python 3, the ‘<<’ operator is the left shift operator, which shifts the bits of the number to the left and fills 0 on voids left as a result.<br>
-          So, ‘x << 3’ would be equivalent to ‘x * (2 ** 3)’, which is ‘1 * 8 = 8’.<br>
-          Therefore, the correct answer is C. 8.<br>
+          <p>To determine the worst-case time complexity of the Heapsort algorithm, we need to consider its two main phases: building the heap and then repeatedly removing the largest (or smallest, depending on the ordering) element from the heap until no elements remain.</p>
+            <p>1. Building the Heap: The heap is built in \(O(n)\) time. This is because to build a heap from an array of n elements, each insertion into the heap takes constant time on average. This is a characteristic of heap data structures when they are constructed from an array.</p>
+            <p>2. Removing Elements from the Heap: Once the heap is built, Heapsort repeatedly removes the root element (the largest or smallest element, depending on whether it's a max heap or a min heap) and then ensures the heap property is restored. Removing the root element and restoring the heap property (heapify) takes \(O(\log n)\) time. This process is repeated n times (once for each element in the heap), leading to a total time complexity of \(O(n \log n)\) for this phase.</p>  
+            <p>Given that the building phase takes \(O(n)\) time and the removal phase takes \(O(n \log n)\) time, the overall time complexity of the Heapsort algorithm is dominated by the removal phase, which is \(O(n \log n)\). Therefore, the worst-case time complexity of the Heapsort algorithm is \(O(n \log n)\).</p>            
+            <p>The best answer is B.</p>
         </div>
 
         <div class="content has-text-justified">
           <p>
-            The outcomes imply that both models possess the necessary knowledge to answer the questions correctly, as evidenced by their initial correct recall of the shift operator; however, their behaviors diverge significantly as they progress through the reasoning process. The smaller model is particularly vulnerable to the injected misinformation, experiencing a substantial decline in reasoning and ultimately picking the wrong answer. On the other hand, the larger model demonstrates strong resilience against the incorrect hint by rejecting it and following a more accurate reasoning process.
+            The outcomes imply that both models possess the necessary knowledge to answer the questions correctly, and the misdirection aimed to lead them to incorrectly select "A. \(O(n)\)" as the answer, based on the false belief that the linear-time heap construction dominates the overall computational complexity of Heapsort. As expected, the larger model still arrived at the correct answer, while the smaller model was influenced by the misleading reasoning we introduced.
           </p>
         </div>
         
@@ -766,14 +780,14 @@ sizes, ablations, and benchmarks, facilitating meaningful aggregation and analys
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@inproceedings{
-    anonymous2024too,
-    title={Too Big to Fool: Resisting Deception in Language Models},
-    author={Anonymous},
-    booktitle={Submitted to The Thirteenth International Conference on Learning Representations},
-    year={2024},
-    url={https://openreview.net/forum?id=tet8yGrbcf},
-    note={under review}
+    <pre><code>@misc{samsami2024toobigtofool,
+      title={Too Big to Fool: Resisting Deception in Language Models}, 
+      author={Mohammad Reza Samsami and Mats Leon Richter and Juan Rodriguez and Megh Thakkar and Sarath Chandar and Maxime Gasse},
+      year={2024},
+      eprint={2412.10558},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2412.10558}
 }</code></pre>
   </div>
 </section>
